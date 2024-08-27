@@ -37,7 +37,6 @@ func (s *DbStore) UseDatabase(name string) error {
 	if err != nil {
 		return fmt.Errorf("failed to use database: %w", err)
 	}
-	log.Success("database is now '" + name + "'")
 	return nil
 }
 
@@ -81,16 +80,18 @@ func (s *DbStore) GenerateInsertionMap(fields []schemas.TableFields, seedSize in
 }
 
 func (s *DbStore) BatchInsertFromMap(bArr []map[string]schemas.InsertionMap, fields []schemas.TableFields, table string, chunkSize int64) error {
-	log.Info("Generating SQL Value Strings...")
+	log.Info("Generating SQL Column Mapping...")
 	columnsString := "("
 	var valuesString = []string{}
 	fieldsOrder := []string{}
-	for _, v := range fields {
+	for i, v := range fields {
+		fmt.Printf("\033[1A\033[K SQL Columns Mapping Generated: %v/%v\n", (i + 1), len(fields))
 		columnsString += v.Field + ", "
 		fieldsOrder = append(fieldsOrder, v.Field)
 	}
 	columnsString = strings.TrimSuffix(columnsString, ", ") + ")"
 	tmpValuesString := ""
+	log.Info("Generating SQL Value Strings...")
 	fmt.Println(" ")
 	for idx, v := range bArr {
 		fmt.Printf("\033[1A\033[K SQL Values Generated: %v/%v\n", (idx + 1), len(bArr))
@@ -113,10 +114,10 @@ func (s *DbStore) BatchInsertFromMap(bArr []map[string]schemas.InsertionMap, fie
 		}
 
 	}
-	log.Info("Inserting into table...")
+	log.Info("Batch Inserting into table...")
 	fmt.Println(" ")
 	for i, v := range valuesString {
-		fmt.Printf("\033[1A\033[KBatch %v/%v\n", (i + 1), len(valuesString))
+		fmt.Printf("\033[1A\033[K Batches inserted: %v/%v\n", (i + 1), len(valuesString))
 
 		SQLStr := "INSERT INTO " + table + " " + columnsString + " VALUES " + strings.TrimSuffix(v, ", ") + ";"
 		_, err := s.Exec(SQLStr)

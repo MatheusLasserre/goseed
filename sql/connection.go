@@ -2,9 +2,9 @@ package sql
 
 import (
 	"fmt"
+	"goseed/log"
 	"goseed/methods"
 	"goseed/schemas"
-	"log"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
@@ -18,7 +18,7 @@ func Connect(conn string) (*Store, error) {
 	if err := db.Ping(); err != nil {
 		return nil, fmt.Errorf("failed to ping database: %w", err)
 	}
-	log.Println("connected to database")
+	log.Success("Database connected.")
 	return &Store{
 		PersonStore: methods.NewPersonStore(db),
 		DbStore:     methods.NewDbStore(db),

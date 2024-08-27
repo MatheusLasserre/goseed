@@ -45,12 +45,11 @@ func init() {
 	rootCmd.Flags().StringP("table", "t", "", "from table")
 	rootCmd.Flags().StringP("host", "p", "", "Database Connection String. Example: -p \"root:goseed@tcp(localhost:3306)/\"")
 	rootCmd.Flags().Int64P("size", "s", 0, "Seed size")
-	rootCmd.Flags().Int64P("chunkSize", "c", 0, "How many rows to insert at a time")
+	rootCmd.Flags().Int64P("chunkSize", "c", 0, "How many rows to insert at a time. Default: 100. Recommended: 100.")
 
 }
 
 func startSeed(cmd *cobra.Command, args []string) {
-	fmt.Printf("Args: %+q\n", args)
 	dbName, err := cmd.Flags().GetString("database")
 	if err != nil {
 		log.Fatal("failed to detect database:" + err.Error())
@@ -91,8 +90,10 @@ func startSeed(cmd *cobra.Command, args []string) {
 		log.Error("failed to detect connection string or input is empty")
 		return
 	}
-	fmt.Println("use:", dbName)
-	fmt.Println("table:", table)
+	fmt.Println("Database selected:", dbName)
+	fmt.Println("Table selected:", table)
+	fmt.Println("Seed Size:", seedSize)
+	fmt.Println("Chunk Size:", chunkSize)
 	db, err := sql.Connect(connStr)
 	if err != nil {
 		log.Fatal("failed to connect to database:" + err.Error())
