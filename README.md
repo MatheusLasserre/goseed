@@ -15,11 +15,17 @@ cd goseed
 go mod tidy
 ```
 
-Build the binary
+Build and install the binary
 
 ```bash
 make bi
 ```
+or
+
+```bash
+go build && go install
+```
+or
 
 Run the binary
 
