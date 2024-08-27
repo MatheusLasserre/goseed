@@ -8,6 +8,7 @@ import (
 	"goseed/log"
 	"goseed/sql"
 	"os"
+	"strconv"
 
 	"github.com/spf13/cobra"
 )
@@ -42,6 +43,10 @@ func init() {
 	// when this action is called directly.
 	rootCmd.Flags().StringP("database", "d", "", "use database")
 	rootCmd.Flags().StringP("table", "t", "", "from table")
+	rootCmd.Flags().StringP("host", "p", "", "Database Connection String. Example: -p \"root:goseed@tcp(localhost:3306)/\"")
+	rootCmd.Flags().Int64P("size", "s", 0, "Seed size")
+	rootCmd.Flags().Int64P("chunkSize", "c", 0, "How many rows to insert at a time")
+
 }
 
 func startSeed(cmd *cobra.Command, args []string) {
@@ -59,9 +64,36 @@ func startSeed(cmd *cobra.Command, args []string) {
 		log.Error("failed to detect table:" + err.Error())
 		return
 	}
+	seedSize, err := cmd.Flags().GetInt64("size")
+	if err != nil {
+		log.Error("failed to detect seed size:" + err.Error())
+		return
+	}
+	if seedSize == 0 {
+		log.Error("failed to detect seed size or input is 0")
+		return
+	}
+	chunkSize, err := cmd.Flags().GetInt64("chunkSize")
+	if err != nil {
+		log.Error("failed to detect chunk size:" + err.Error())
+		return
+	}
+	if chunkSize == 0 {
+		log.Info("failed to detect chunk size or input is 0. Using default chunk size: 100")
+		chunkSize = 100
+	}
+	connStr, err := cmd.Flags().GetString("host")
+	if err != nil {
+		log.Error("failed to detect connection string:" + err.Error())
+		return
+	}
+	if connStr == "" {
+		log.Error("failed to detect connection string or input is empty")
+		return
+	}
 	fmt.Println("use:", dbName)
 	fmt.Println("table:", table)
-	db, err := sql.Connect()
+	db, err := sql.Connect(connStr)
 	if err != nil {
 		log.Fatal("failed to connect to database:" + err.Error())
 		return
@@ -84,25 +116,21 @@ func startSeed(cmd *cobra.Command, args []string) {
 		return
 	}
 	log.Info("Table Fields:")
-	for _, v := range fields {
-		key, defaultValue, extra := "EMPTY", "NULL", "EMPTY"
-		if v.Key != nil {
-			if len(*v.Key) > 0 {
-				key = *v.Key
-			}
-		}
-		if v.Default != nil {
-			defaultValue = *v.Default
-		}
-		if v.Extra != nil {
-			if len(*v.Extra) > 0 {
-				extra = *v.Extra
-			}
-		}
-
-		fmt.Printf("Field: %v, Type: %v, Null: %v, Key: %v, Default: %v, Extra: %v\n", v.Field, v.Type, v.Null, key, defaultValue, extra)
-
+	// insertMaps := make([]schemas.InsertionMap, SeedSize)
+	insertMap := db.DbStore.GenerateInsertionMap(fields, seedSize)
+	err = db.DbStore.BatchInsertFromMap(insertMap, fields, table, chunkSize)
+	if err != nil {
+		log.Fatal("failed to batch insert from map:" + err.Error())
+		return
 	}
+	log.Success("batch insert from map")
+
+	count, err := db.DbStore.SelectCount(table)
+	if err != nil {
+		log.Fatal("failed to select count:" + err.Error())
+		return
+	}
+	log.Info("TABLE " + table + " count: " + strconv.FormatInt(count, 10))
 	// Logic before here
 
 	// testing(db)

@@ -10,8 +10,8 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-func Connect() (*Store, error) {
-	db, err := sqlx.Open("mysql", "root:goseed@tcp(localhost:3306)/")
+func Connect(conn string) (*Store, error) {
+	db, err := sqlx.Open("mysql", conn)
 	if err != nil {
 		return nil, fmt.Errorf("failed to opening to database: %w", err)
 	}
@@ -31,3 +31,5 @@ type Store struct {
 	schemas.DbStore
 	*sqlx.DB
 }
+
+// root:goseed@tcp(localhost:3306)/
