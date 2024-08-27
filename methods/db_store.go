@@ -48,9 +48,11 @@ func (s *DbStore) GetTableFields(database, table string) ([]schemas.TableFields,
 }
 
 func (s *DbStore) GenerateInsertionMap(fields []schemas.TableFields, seedSize int64) []map[string]schemas.InsertionMap {
+	log.Info("Generating Rows...")
 	mapArray := make([]map[string]schemas.InsertionMap, seedSize)
+	fmt.Println(" ")
 	for i := int64(0); i < seedSize; i++ {
-
+		fmt.Printf("\033[1A\033[K Rows Generated: %v/%v\n", (i + 1), seedSize)
 		result := make(map[string]schemas.InsertionMap)
 		for _, v := range fields {
 			strValue, intValue, err := GenerateTableFieldValue(v, int(i))
@@ -79,6 +81,7 @@ func (s *DbStore) GenerateInsertionMap(fields []schemas.TableFields, seedSize in
 }
 
 func (s *DbStore) BatchInsertFromMap(bArr []map[string]schemas.InsertionMap, fields []schemas.TableFields, table string, chunkSize int64) error {
+	log.Info("Generating SQL Value Strings...")
 	columnsString := "("
 	var valuesString = []string{}
 	fieldsOrder := []string{}
@@ -88,7 +91,9 @@ func (s *DbStore) BatchInsertFromMap(bArr []map[string]schemas.InsertionMap, fie
 	}
 	columnsString = strings.TrimSuffix(columnsString, ", ") + ")"
 	tmpValuesString := ""
+	fmt.Println(" ")
 	for idx, v := range bArr {
+		fmt.Printf("\033[1A\033[K SQL Values Generated: %v/%v\n", (idx + 1), len(bArr))
 		tmpValuesString += "("
 		for _, v2 := range fieldsOrder {
 			mapV, ok := v[v2]
@@ -108,8 +113,10 @@ func (s *DbStore) BatchInsertFromMap(bArr []map[string]schemas.InsertionMap, fie
 		}
 
 	}
+	log.Info("Inserting into table...")
+	fmt.Println(" ")
 	for i, v := range valuesString {
-		fmt.Printf("Batch %v/%v\n", i+1, len(valuesString))
+		fmt.Printf("\033[1A\033[KBatch %v/%v\n", (i + 1), len(valuesString))
 
 		SQLStr := "INSERT INTO " + table + " " + columnsString + " VALUES " + strings.TrimSuffix(v, ", ") + ";"
 		_, err := s.Exec(SQLStr)

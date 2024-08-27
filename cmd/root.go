@@ -115,7 +115,6 @@ func startSeed(cmd *cobra.Command, args []string) {
 		log.Fatal("failed to get table fields:" + err.Error())
 		return
 	}
-	log.Info("Table Fields:")
 	// insertMaps := make([]schemas.InsertionMap, SeedSize)
 	insertMap := db.DbStore.GenerateInsertionMap(fields, seedSize)
 	err = db.DbStore.BatchInsertFromMap(insertMap, fields, table, chunkSize)
