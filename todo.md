@@ -24,3 +24,5 @@ Extra: auto_increment
 GenerateMap
 
 Current time to generate SQL Value Strings for 100k rows: ~1.87s-1.9s
+After changing += to = for tmpValuesString, it took ~1.80s-1.9s
+Creating intermediate string for each loop, it took ~660ms

@@ -94,26 +94,26 @@ func (s *DbStore) BatchInsertFromMap(bArr []map[string]schemas.InsertionMap, fie
 	}
 	log.Info("Generating SQL Column Mapping took: " + time.Since(start).String())
 	columnsString = strings.TrimSuffix(columnsString, ", ") + ")"
-	tmpValuesString := ""
+	tmpValuesString, utilString := "", ""
 	log.Info("Generating SQL Value Strings...")
 	fmt.Println(" ")
 	start = time.Now()
+	bArrLen := len(bArr) - 1
 	for idx, v := range bArr {
 		fmt.Printf("\033[1A\033[K SQL Values Generated: %v/%v\n", (idx + 1), len(bArr))
-		tmpValuesString = tmpValuesString + "("
+		utilString = "("
 		for _, v2 := range fieldsOrder {
 			mapV, ok := v[v2]
 			if ok {
 				if mapV.StrValue != "" {
-					tmpValuesString = tmpValuesString + "'" + mapV.StrValue + "', "
+					utilString = utilString + "'" + mapV.StrValue + "', "
 				} else {
-					tmpValuesString = tmpValuesString + strconv.FormatInt(mapV.IntValue.Number(), 10) + ", "
+					utilString = utilString + strconv.FormatInt(mapV.IntValue.Number(), 10) + ", "
 				}
-
 			}
 		}
-		tmpValuesString = strings.TrimSuffix(tmpValuesString, ", ") + "), "
-		if int64(idx+1)%chunkSize == 0 && int64(idx) >= chunkSize || idx == len(bArr)-1 {
+		tmpValuesString = tmpValuesString + strings.TrimSuffix(utilString, ", ") + "), "
+		if int64(idx+1)%chunkSize == 0 && int64(idx) >= chunkSize || idx == bArrLen {
 			valuesString = append(valuesString, tmpValuesString)
 			tmpValuesString = ""
 		}
