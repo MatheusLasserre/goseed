@@ -9,6 +9,7 @@ import (
 	"goseed/sql"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/spf13/cobra"
 )
@@ -50,6 +51,7 @@ func init() {
 }
 
 func startSeed(cmd *cobra.Command, args []string) {
+	start := time.Now()
 	dbName, err := cmd.Flags().GetString("database")
 	if err != nil {
 		log.Fatal("failed to detect database:" + err.Error())
@@ -123,7 +125,6 @@ func startSeed(cmd *cobra.Command, args []string) {
 		log.Fatal("failed to batch insert from map:" + err.Error())
 		return
 	}
-	log.Success("batch insert from map")
 
 	count, err := db.DbStore.SelectCount(table)
 	if err != nil {
@@ -134,6 +135,7 @@ func startSeed(cmd *cobra.Command, args []string) {
 	// Logic before here
 
 	// testing(db)
+	log.Info("Seed took: " + time.Since(start).String())
 }
 
 func Setup(db *sql.Store) error {

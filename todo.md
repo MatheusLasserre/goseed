@@ -22,3 +22,5 @@ Default: NULL
 Extra: auto_increment
 
 GenerateMap
+
+Current time to generate SQL Value Strings for 100k rows: ~1.87s-1.9s

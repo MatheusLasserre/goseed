@@ -48,6 +48,7 @@ func (s *DbStore) GetTableFields(database, table string) ([]schemas.TableFields,
 
 func (s *DbStore) GenerateInsertionMap(fields []schemas.TableFields, seedSize int64) []map[string]schemas.InsertionMap {
 	log.Info("Generating Rows...")
+	start := time.Now()
 	mapArray := make([]map[string]schemas.InsertionMap, seedSize)
 	fmt.Println(" ")
 	for i := int64(0); i < seedSize; i++ {
@@ -75,34 +76,38 @@ func (s *DbStore) GenerateInsertionMap(fields []schemas.TableFields, seedSize in
 		}
 		mapArray[i] = result
 	}
+	log.Info("Generating Rows took: " + time.Since(start).String())
 
 	return mapArray
 }
 
 func (s *DbStore) BatchInsertFromMap(bArr []map[string]schemas.InsertionMap, fields []schemas.TableFields, table string, chunkSize int64) error {
 	log.Info("Generating SQL Column Mapping...")
+	start := time.Now()
 	columnsString := "("
 	var valuesString = []string{}
 	fieldsOrder := []string{}
 	for i, v := range fields {
 		fmt.Printf("\033[1A\033[K SQL Columns Mapping Generated: %v/%v\n", (i + 1), len(fields))
-		columnsString += v.Field + ", "
+		columnsString = columnsString + v.Field + ", "
 		fieldsOrder = append(fieldsOrder, v.Field)
 	}
+	log.Info("Generating SQL Column Mapping took: " + time.Since(start).String())
 	columnsString = strings.TrimSuffix(columnsString, ", ") + ")"
 	tmpValuesString := ""
 	log.Info("Generating SQL Value Strings...")
 	fmt.Println(" ")
+	start = time.Now()
 	for idx, v := range bArr {
 		fmt.Printf("\033[1A\033[K SQL Values Generated: %v/%v\n", (idx + 1), len(bArr))
-		tmpValuesString += "("
+		tmpValuesString = tmpValuesString + "("
 		for _, v2 := range fieldsOrder {
 			mapV, ok := v[v2]
 			if ok {
 				if mapV.StrValue != "" {
-					tmpValuesString += "'" + mapV.StrValue + "', "
+					tmpValuesString = tmpValuesString + "'" + mapV.StrValue + "', "
 				} else {
-					tmpValuesString += strconv.FormatInt(mapV.IntValue.Number(), 10) + ", "
+					tmpValuesString = tmpValuesString + strconv.FormatInt(mapV.IntValue.Number(), 10) + ", "
 				}
 
 			}
@@ -114,8 +119,10 @@ func (s *DbStore) BatchInsertFromMap(bArr []map[string]schemas.InsertionMap, fie
 		}
 
 	}
+	log.Info("Generating SQL Value Strings took: " + time.Since(start).String())
 	log.Info("Batch Inserting into table...")
 	fmt.Println(" ")
+	start = time.Now()
 	for i, v := range valuesString {
 		fmt.Printf("\033[1A\033[K Batches inserted: %v/%v\n", (i + 1), len(valuesString))
 
@@ -125,6 +132,7 @@ func (s *DbStore) BatchInsertFromMap(bArr []map[string]schemas.InsertionMap, fie
 			return fmt.Errorf("failed to batch insert from map: %w", err)
 		}
 	}
+	log.Warn("Batch Inserting into table took: " + time.Since(start).String())
 	// valuesString = strings.TrimSuffix(valuesString, ", ") + ";"
 	// SQLStr := "INSERT INTO " + table + " " + columnsString + " VALUES " + valuesString
 	// _, err := s.Exec(SQLStr)
@@ -271,7 +279,7 @@ func (v *ValuesGenerator) GenerateNumericTypes(field schemas.TableFields, index 
 			}
 			maxLength := v.maxLength
 			if strings.Contains(v.name, "unsigned") {
-				maxLength += v.maxLength - 1
+				maxLength = maxLength + v.maxLength - 1
 				multiplier = 1
 			}
 
