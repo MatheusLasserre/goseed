@@ -20,14 +20,12 @@ func Connect(conn string) (*Store, error) {
 	}
 	log.Success("Database connected.")
 	return &Store{
-		PersonStore: methods.NewPersonStore(db),
-		DbStore:     methods.NewDbStore(db),
-		DB:          db,
+		DbStore: methods.NewDbStore(db),
+		DB:      db,
 	}, nil
 }
 
 type Store struct {
-	schemas.PersonStore
 	schemas.DbStore
 	*sqlx.DB
 }

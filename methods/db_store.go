@@ -5,7 +5,10 @@ import (
 	"fmt"
 	"goseed/log"
 	"goseed/schemas"
+	"io"
 	"math/rand"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
@@ -24,19 +27,42 @@ type DbStore struct {
 	*sqlx.DB
 }
 
-func (s *DbStore) Setup() error {
-	_, err := s.Exec("CREATE DATABASE IF NOT EXISTS goseed;")
+func (s *DbStore) Setup(relFilePath string) error {
+	pwd, err := os.Getwd()
 	if err != nil {
-		return fmt.Errorf("failed to setup database: %w", err)
+		log.Fatal("failed to get executable path: " + err.Error())
+		return fmt.Errorf("failed to get executable path: %w", err)
 	}
-	return nil
-}
-
-func (s *DbStore) UseDatabase(name string) error {
-	_, err := s.Exec("USE " + name + ";")
+	relFilePath = filepath.Join(pwd, relFilePath)
+	setupFile, err := os.Open(relFilePath)
 	if err != nil {
-		return fmt.Errorf("failed to use database: %w", err)
+		log.Fatal("failed to open setup file: " + err.Error())
+		return fmt.Errorf("failed to open setup file: %w", err)
 	}
+	sqlSetupString, err := io.ReadAll(setupFile)
+	if err != nil {
+		log.Fatal("failed to read setup file: " + err.Error())
+		return fmt.Errorf("failed to read setup file: %w", err)
+	}
+	// scanner := bufio.NewScanner(setupFile)
+	// for scanner.Scan() {
+	// 	sqlSetupString = sqlSetupString + scanner.Text() + "\n"
+	// }
+	// setupFile.Close()
+	sqlStringArray := strings.Split(string(sqlSetupString[:]), ";")
+	for _, v := range sqlStringArray {
+		if strings.TrimSpace(v) == "" {
+			continue
+		}
+		_, err = s.Exec(v)
+		if err != nil {
+			return fmt.Errorf("failed to setup database: %w", err)
+		}
+	}
+	// _, err = s.Exec(string(sqlSetupString[:]))
+	// if err != nil {
+	// 	return fmt.Errorf("failed to setup database: %w", err)
+	// }
 	return nil
 }
 

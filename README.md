@@ -47,6 +47,7 @@ goseed -h
 >  -d, --database string   use database\
 >  -h, --help              help for goseed\
 >  -p, --host string       Database Connection String. Example: -p "root:goseed@tcp(localhost:3306)/"\
+>  --setup-file string       Database Connection String. Example: -p "root:goseed@tcp(localhost:3306)/"\
 >  -s, --size int          Seed size\
 >  -t, --table string      from table\</pre>
 

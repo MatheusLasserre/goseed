@@ -46,6 +46,7 @@ func init() {
 	rootCmd.Flags().StringP("database", "d", "", "use database")
 	rootCmd.Flags().StringP("table", "t", "", "from table")
 	rootCmd.Flags().StringP("host", "p", "", "Database Connection String. Example: -p \"root:goseed@tcp(localhost:3306)/\"")
+	rootCmd.Flags().String("setup-file", "", "Setup file containing SQL statements to run on startup. It's a raw run, so make sure it's valid SQL.")
 	rootCmd.Flags().Int64P("size", "s", 0, "Seed size")
 	rootCmd.Flags().Int64P("chunkSize", "c", 0, "How many rows to insert at a time. Default: 100. Recommended: 100.")
 	rootCmd.Flags().IntP("max-connections", "m", 0, "How many connections to use. The dafault value is the result of SHOW VARIABLES LIKE 'max_connections'. If max_connections is 0 or not found, the default value is 1.")
@@ -94,6 +95,11 @@ func startSeed(cmd *cobra.Command, args []string) {
 		log.Error("failed to detect connection string or input is empty")
 		return
 	}
+	setupFilePath, err := cmd.Flags().GetString("setup-file")
+	if err != nil {
+		log.Error("failed to detect setup file:" + err.Error())
+		return
+	}
 	fmt.Println("Database selected:", dbName)
 	fmt.Println("Table selected:", table)
 	fmt.Println("Seed Size:", seedSize)
@@ -103,11 +109,12 @@ func startSeed(cmd *cobra.Command, args []string) {
 		log.Fatal("failed to connect to database:" + err.Error())
 		return
 	}
-	// This piece of code is for testing purposes and should be removed
-	err = Setup(db)
-	if err != nil {
-		log.Fatal("failed to setup database:" + err.Error())
-		return
+	if setupFilePath != "" {
+		err = db.DbStore.Setup(setupFilePath)
+		if err != nil {
+			log.Fatal("failed to setup database:" + err.Error())
+			return
+		}
 	}
 	maxConn, err := cmd.Flags().GetInt("max-connections")
 	if err != nil || maxConn == 0 {
@@ -144,29 +151,4 @@ func startSeed(cmd *cobra.Command, args []string) {
 	log.Info("TABLE " + table + " count: " + strconv.FormatInt(count, 10))
 
 	log.Info("Seed took: " + time.Since(start).String())
-}
-
-func Setup(db *sql.Store) error {
-	err := db.DbStore.Setup()
-	if err != nil {
-		return fmt.Errorf("failed to setup database: %w", err)
-	}
-	_, err = db.DB.Exec("USE goseed;")
-	if err != nil {
-		return fmt.Errorf("failed to use database: %w", err)
-	}
-	err = db.PersonStore.Setup()
-	if err != nil {
-		return fmt.Errorf("failed to get all person: %w", err)
-	}
-	return nil
-}
-
-type DescribeTable struct {
-	Field   string  `db:"Field"`
-	Type    string  `db:"Type"`
-	Null    string  `db:"Null"`
-	Key     *string `db:"Key"`
-	Default *string `db:"Default"`
-	Extra   *string `db:"Extra"`
 }

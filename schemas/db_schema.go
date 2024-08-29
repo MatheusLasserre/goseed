@@ -3,8 +3,7 @@ package schemas
 import "sync"
 
 type DbStore interface {
-	Setup() error
-	UseDatabase(name string) error
+	Setup(relFilePath string) error
 	GetTableFields(database, table string) ([]TableFields, error)
 	GenerateInsertionMap(fields []TableFields, seedSize int64) []map[string]InsertionMap
 	BatchInsertFromMap(bArr []map[string]InsertionMap, fields []TableFields, table string, chunkSize int64, dbName string, maxConn int, wg *sync.WaitGroup) error
