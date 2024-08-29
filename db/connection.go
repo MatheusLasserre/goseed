@@ -1,10 +1,10 @@
-package sql
+package db
 
 import (
 	"fmt"
 	"goseed/log"
-	"goseed/methods"
 	"goseed/schemas"
+	"goseed/store"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
@@ -20,7 +20,7 @@ func Connect(conn string) (*Store, error) {
 	}
 	log.Success("Database connected.")
 	return &Store{
-		DbStore: methods.NewDbStore(db),
+		DbStore: store.NewDbStore(db),
 		DB:      db,
 	}, nil
 }

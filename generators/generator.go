@@ -138,9 +138,9 @@ var supportedDateTypes = [...]TypesFormat{
 }
 
 func (v *ValuesGenerator) GenerateDateTypes(field schemas.TableFields) (string, error) {
+	strSlice := strings.Split(field.Type, "(")
 	for _, v := range supportedDateTypes {
-		strSlice := strings.Split(v.name, "(")
-		if strings.ToLower(strSlice[0]) == field.Type {
+		if strings.ToLower(strSlice[0]) == v.name {
 			randDate := generateRandomUnixTime(946692000, 1893466800)
 			if field.Type == "date" {
 				return randDate.Format("2006-01-02"), nil

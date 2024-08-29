@@ -5,8 +5,8 @@ package cmd
 
 import (
 	"fmt"
+	"goseed/db"
 	"goseed/log"
-	"goseed/sql"
 	"os"
 	"strconv"
 	"sync"
@@ -104,7 +104,7 @@ func startSeed(cmd *cobra.Command, args []string) {
 	fmt.Println("Table selected:", table)
 	fmt.Println("Seed Size:", seedSize)
 	fmt.Println("Chunk Size:", chunkSize)
-	db, err := sql.Connect(connStr)
+	db, err := db.Connect(connStr)
 	if err != nil {
 		log.Fatal("failed to connect to database:" + err.Error())
 		return
