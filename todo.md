@@ -30,10 +30,14 @@ Creating intermediate string for each loop, it took ~660ms
 Generating SQL Value Strings for 1M rows: ~17s
 After optimizing by making a  tmpSlice instead of a tmpString and just concatenating when the chunkSize is met and then cleaning the tmpArray, it took: ~5s
 
-TODO: Multithreading
+Change: Multithreading
     -> Before: 1M rows, 1k chunkSize, it took ~18s
     -> After: 1M rows, 1k chunkSize, it took ~11s
+CHange: Removing useless fmt.Println
+    -> Before: 1M rows, 1k chunkSize, it took ~11s
+    -> After: 1M rows, 1k chunkSize, it took ~5s
 TODO: Add more types
 TODO: Support for composite primary keys
 TODO: Support for foreign keys
 TODO: Make batch insert for each chunkSize
+
