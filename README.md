@@ -1,17 +1,16 @@
 # goseed
-
-How to use:
+A CLI tool to seed sql databases with random data.
+### How to use:
 
 Clone the repo
 
 ```bash
-git clone https://github.com/MatheusLasserre/goseed.git
+git clone https://github.com/MatheusLasserre/goseed.git && cd goseed
 ```
 
 Install dependencies
 
 ```bash
-cd goseed
 go mod tidy
 ```
 
@@ -25,9 +24,8 @@ or
 ```bash
 go build && go install
 ```
-or
 
-Run the binary
+Run the command
 
 ```bash
 goseed -d goseed -t person -s 50101 -c 1000 -p "root:goseed@tcp(localhost:3306)/"
