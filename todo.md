@@ -26,3 +26,6 @@ GenerateMap
 Current time to generate SQL Value Strings for 100k rows: ~1.87s-1.9s
 After changing += to = for tmpValuesString, it took ~1.80s-1.9s
 Creating intermediate string for each loop, it took ~660ms
+
+Generating SQL Value Strings for 1M rows: ~17s
+After optimizing by making a  tmpSlice instead of a tmpString and just concatenating when the chunkSize is met and then cleaning the tmpArray, it took: ~5s
