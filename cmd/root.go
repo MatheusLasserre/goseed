@@ -9,6 +9,7 @@ import (
 	"goseed/sql"
 	"os"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -107,12 +108,14 @@ func startSeed(cmd *cobra.Command, args []string) {
 		return
 	}
 	// Logic here
-	err = db.DbStore.UseDatabase(dbName)
+	maxConn, err := db.DbStore.GetMaxConnections()
 	if err != nil {
-		log.Fatal("USE DATABASE failed:" + err.Error())
+		log.Fatal("failed to get max connections: " + err.Error())
 		return
 	}
-
+	db.DB.SetMaxOpenConns(maxConn)
+	db.DB.SetMaxIdleConns(maxConn)
+	fmt.Printf("Max Connections: %v\n", maxConn)
 	fields, err := db.DbStore.GetTableFields(dbName, table)
 	if err != nil {
 		log.Fatal("failed to get table fields:" + err.Error())
@@ -120,13 +123,17 @@ func startSeed(cmd *cobra.Command, args []string) {
 	}
 	// insertMaps := make([]schemas.InsertionMap, SeedSize)
 	insertMap := db.DbStore.GenerateInsertionMap(fields, seedSize)
-	err = db.DbStore.BatchInsertFromMap(insertMap, fields, table, chunkSize)
+	wg := &sync.WaitGroup{}
+	start2 := time.Now()
+	err = db.DbStore.BatchInsertFromMap(insertMap, fields, table, chunkSize, dbName, maxConn, wg)
+	wg.Wait()
 	if err != nil {
 		log.Fatal("failed to batch insert from map:" + err.Error())
 		return
 	}
+	log.Info("Generating SQL Value Strings and Sending Batches took: " + time.Since(start2).String())
 
-	count, err := db.DbStore.SelectCount(table)
+	count, err := db.DbStore.SelectCount(table, dbName)
 	if err != nil {
 		log.Fatal("failed to select count:" + err.Error())
 		return

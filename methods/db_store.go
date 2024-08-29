@@ -8,6 +8,7 @@ import (
 	"math/rand"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 	"unsafe"
 
@@ -50,9 +51,9 @@ func (s *DbStore) GenerateInsertionMap(fields []schemas.TableFields, seedSize in
 	log.Info("Generating Rows...")
 	start := time.Now()
 	mapArray := make([]map[string]schemas.InsertionMap, seedSize)
-	fmt.Println(" ")
+	// fmt.Println(" ")
 	for i := int64(0); i < seedSize; i++ {
-		fmt.Printf("\033[1A\033[K Rows Generated: %v/%v\n", (i + 1), seedSize)
+		// fmt.Printf("\033[1A\033[K Rows Generated: %v/%v\n", (i + 1), seedSize)
 		result := make(map[string]schemas.InsertionMap)
 		for _, v := range fields {
 			strValue, intValue, err := GenerateTableFieldValue(v, int(i))
@@ -81,27 +82,25 @@ func (s *DbStore) GenerateInsertionMap(fields []schemas.TableFields, seedSize in
 	return mapArray
 }
 
-func (s *DbStore) BatchInsertFromMap(bArr []map[string]schemas.InsertionMap, fields []schemas.TableFields, table string, chunkSize int64) error {
+func (s *DbStore) BatchInsertFromMap(bArr []map[string]schemas.InsertionMap, fields []schemas.TableFields, table string, chunkSize int64, dbName string, maxConn int, wg *sync.WaitGroup) error {
 	log.Info("Generating SQL Column Mapping...")
-	start := time.Now()
 	bArrLen := len(bArr)
 	columnsString := "("
 	var valuesString = []string{}
 	fieldsOrder := []string{}
-	for i, v := range fields {
-		fmt.Printf("\033[1A\033[K SQL Columns Mapping Generated: %v/%v\n", (i + 1), len(fields))
+	for _, v := range fields {
 		columnsString = columnsString + v.Field + ", "
 		fieldsOrder = append(fieldsOrder, v.Field)
 	}
-	log.Info("Generating SQL Column Mapping took: " + time.Since(start).String())
 	columnsString = strings.TrimSuffix(columnsString, ", ") + ")"
 	utilString := ""
-	log.Info("Generating SQL Value Strings...")
-	fmt.Println(" ")
-	start = time.Now()
-	sqlValuesStrings := []string{}
+	log.Info("Generating SQL Value Strings and Sending Batches...")
+	maxLimit := maxConn - 10
+	if maxLimit < 1 {
+		maxLimit = 1
+	}
+	limiter := make(chan int, maxLimit)
 	for idx, v := range bArr {
-		fmt.Printf("\033[1A\033[K SQL Values Generated: %v/%v\n", (idx + 1), bArrLen)
 		utilString = "("
 		for _, v2 := range fieldsOrder {
 			mapV, ok := v[v2]
@@ -117,35 +116,51 @@ func (s *DbStore) BatchInsertFromMap(bArr []map[string]schemas.InsertionMap, fie
 		valuesString = append(valuesString, utilString)
 
 		if int64(idx+1)%chunkSize == 0 && int64(idx+1) >= chunkSize || idx == bArrLen {
-			sqlValuesStrings = append(sqlValuesStrings, strings.Join(valuesString[:], ", "))
+			wg.Add(1)
+			limiter <- 1
+			go func(sql string, wg *sync.WaitGroup, db *sqlx.DB) {
+				_, err := db.Exec(sql)
+				if err != nil {
+					log.Fatal("failed to batch insert from map: " + err.Error())
+				}
+
+				<-limiter
+				wg.Done()
+			}("INSERT INTO "+dbName+"."+table+" "+columnsString+" VALUES "+strings.TrimSuffix(strings.Join(valuesString[:], ", "), ", ")+";", wg, s.DB)
 			valuesString = []string{}
 		}
-
 	}
-	log.Info("Generating SQL Value Strings took: " + time.Since(start).String())
-	log.Info("Batch Inserting into table...")
-	fmt.Println(" ")
-	start = time.Now()
-	for i, v := range sqlValuesStrings {
-		fmt.Printf("\033[1A\033[K Batches inserted: %v/%v\n", (i + 1), len(sqlValuesStrings))
-
-		SQLStr := "INSERT INTO " + table + " " + columnsString + " VALUES " + strings.TrimSuffix(v, ", ") + ";"
-		_, err := s.Exec(SQLStr)
-		if err != nil {
-			return fmt.Errorf("failed to batch insert from map: %w", err)
-		}
-	}
-	log.Warn("Batch Inserting into table took: " + time.Since(start).String())
 	return nil
 }
 
-func (s *DbStore) SelectCount(table string) (int64, error) {
+func (s *DbStore) SelectCount(table string, dbName string) (int64, error) {
 	var count int64
-	err := s.Get(&count, "SELECT COUNT(*) FROM "+table+";")
+	err := s.Get(&count, "SELECT COUNT(*) FROM "+""+dbName+"."+table+";")
 	if err != nil {
 		return 0, fmt.Errorf("failed to get count: %w", err)
 	}
 	return count, nil
+}
+
+func (s *DbStore) GetMaxConnections() (int, error) {
+	max := schemas.ShowVariables{}
+	err := s.Get(&max, "SHOW VARIABLES LIKE 'max_connections';")
+	if err != nil {
+		return 0, fmt.Errorf("failed to get max connections: %w", err)
+	}
+	maxValue, err := strconv.Atoi(max.Value)
+	if err != nil {
+		log.Fatal("failed to get max connections: " + err.Error())
+		return 0, fmt.Errorf("failed to get max connections: %w", err)
+	}
+	if maxValue == 0 {
+		log.Info("max_connections found is 0. Setting to default: 100")
+		return 100, nil
+	}
+	if maxValue == 1 {
+		return 1, nil
+	}
+	return maxValue, nil
 }
 
 var GenerateValue = NewValuesGenerator()

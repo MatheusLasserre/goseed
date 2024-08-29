@@ -31,6 +31,8 @@ Generating SQL Value Strings for 1M rows: ~17s
 After optimizing by making a  tmpSlice instead of a tmpString and just concatenating when the chunkSize is met and then cleaning the tmpArray, it took: ~5s
 
 TODO: Multithreading
+    -> Before: 1M rows, 1k chunkSize, it took ~18s
+    -> After: 1M rows, 1k chunkSize, it took ~11s
 TODO: Add more types
 TODO: Support for composite primary keys
 TODO: Support for foreign keys
