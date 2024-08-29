@@ -31,13 +31,21 @@ func (s *PersonStore) Setup() error {
 		return fmt.Errorf("failed to drop person table: %w", err)
 	}
 	_, err = s.Exec(`CREATE TABLE IF NOT EXISTS person (
-	id INT NOT NULL AUTO_INCREMENT, 
+	id BIGINT NOT NULL AUTO_INCREMENT, 
 	name VARCHAR(255) NOT NULL,
-	created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-	PRIMARY KEY (id))
+	created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+	)PRIMARY KEY (id)
 	`)
 	if err != nil {
-		return fmt.Errorf("failed to setup person table: %w", err)
+		_, err = s.Exec(`CREATE TABLE IF NOT EXISTS person (
+			id BIGINT NOT NULL AUTO_INCREMENT, 
+			name VARCHAR(255) NOT NULL,
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY (id))
+			`)
+		if err != nil {
+			return fmt.Errorf("failed to setup person table: %w", err)
+		}
 	}
 	return nil
 }

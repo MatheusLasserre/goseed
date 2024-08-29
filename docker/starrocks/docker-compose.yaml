@@ -1,0 +1,19 @@
+services:
+  db:
+    image: starrocks/allin1-ubuntu:latest
+    container_name: goseed-starrocks
+    cap_add:
+      - SYS_NICE
+    restart: always
+    # environment:
+      # - MYSQL_DATABASE=goseed
+      # - MYSQL_ROOT_PASSWORD=goseed
+    ports:
+      - '9030:9030'
+      - '8030:8030'
+      - '8040:8040'
+    volumes:
+      - db:/var/lib/starrocks
+volumes:
+  db:
+    driver: local

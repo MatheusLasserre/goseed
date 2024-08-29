@@ -146,7 +146,8 @@ func (s *DbStore) GetMaxConnections() (int, error) {
 	max := schemas.ShowVariables{}
 	err := s.Get(&max, "SHOW VARIABLES LIKE 'max_connections';")
 	if err != nil {
-		return 0, fmt.Errorf("failed to get max connections: %w", err)
+		log.Info("max_connections not found. Setting to default: 1")
+		return 1, nil
 	}
 	maxValue, err := strconv.Atoi(max.Value)
 	if err != nil {
@@ -219,15 +220,14 @@ var supportedStringTypes = [...]supportedStrings{
 }
 
 func (v *ValuesGenerator) GenerateStringTypes(field schemas.TableFields) (string, error) {
-	if field.Key != nil {
-		if (*field.Key) == "PRI" {
-			return uuid.NewString(), nil
-		}
-	}
-
 	for _, v := range supportedStringTypes {
 		strSlice := strings.Split(field.Type, "(")
 		if strings.ToLower(strSlice[0]) == v.name {
+			if field.Key != nil {
+				if (*field.Key) == "PRI" {
+					return uuid.NewString(), nil
+				}
+			}
 			if len(strSlice) > 1 {
 				typeLength, err := strconv.ParseInt(strings.Replace(strSlice[1], ")", "", -1), 10, 64)
 				if err != nil {
