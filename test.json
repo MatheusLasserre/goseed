@@ -1,0 +1,13 @@
+{
+    "URI": "root:goseed@tcp(localhost:3306)/",
+    "database": "goseed",
+    "chunkSize": 100,
+    "seedSize": 1e9,
+    "setupFile": "docker/mysql/example.sql",
+    "tables": {
+        "person": {
+            "name": "faker-name",
+            "cities": "faker-city"
+        }
+    }
+}
