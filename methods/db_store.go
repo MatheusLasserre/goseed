@@ -25,7 +25,6 @@ type DbStore struct {
 }
 
 func (s *DbStore) Setup() error {
-	fmt.Println("setup database")
 	_, err := s.Exec("CREATE DATABASE IF NOT EXISTS goseed;")
 	if err != nil {
 		return fmt.Errorf("failed to setup database: %w", err)
