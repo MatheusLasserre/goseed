@@ -1,0 +1,208 @@
+---------- Benchmark ----------
+1M Rows, 10k ChunkSize, 
+Seed took: 3.940621759s
+ 
+2M Rows, 10k ChunkSize, 
+Seed took: 8.364615718s
+ 
+4M Rows, 10k ChunkSize, 
+Seed took: 39.93330112s
+ 
+8M Rows, 10k ChunkSize, 
+Seed took: 1m1.767137985s
+ 
+16M Rows, 10k ChunkSize, 
+Seed took: 2m29.050719689s
+ 
+32M Rows, 10k ChunkSize, 
+Seed took: 27.512692445s
+ ---------- Benchmark ----------
+1M Rows, 10k ChunkSize, 
+Seed took: 13.648987339s
+ 
+2M Rows, 10k ChunkSize, 
+Seed took: 8.921496399s
+ 
+4M Rows, 10k ChunkSize, 
+Seed took: 34.394482974s
+ 
+8M Rows, 10k ChunkSize, 
+Seed took: 1m19.141223262s
+ 
+16M Rows, 10k ChunkSize, 
+Seed took: 2m28.439483357s
+ 
+32M Rows, 10k ChunkSize, 
+Seed took: 4m52.265052266s
+ 
+---------- Benchmark ----------
+1M Rows, 10k ChunkSize, 
+Seed took: 13.32146645s
+ 
+2M Rows, 10k ChunkSize, 
+Seed took: 8.731804096s
+ 
+4M Rows, 10k ChunkSize, 
+Seed took: 46.781066558s
+ 
+8M Rows, 10k ChunkSize, 
+Seed took: 1m18.809525746s
+ 
+16M Rows, 10k ChunkSize, 
+Seed took: 2m33.391429591s
+ 
+32M Rows, 10k ChunkSize, 
+Seed took: 5m13.828129142s
+ 
+---------- Benchmark ----------
+1M Rows, 10k ChunkSize, 
+Seed took: 10.094814421s
+ 
+2M Rows, 10k ChunkSize, 
+Seed took: 10.655217381s
+ 
+4M Rows, 10k ChunkSize, 
+Seed took: 39.853948064s
+ 
+8M Rows, 10k ChunkSize, 
+Seed took: 1m2.838558014s
+ 
+16M Rows, 10k ChunkSize, 
+Seed took: 2m17.329004682s
+ 
+32M Rows, 10k ChunkSize, 
+Seed took: 5m19.289704112s
+ 
+---------- Benchmark ----------
+1M Rows, 10k ChunkSize, 
+Seed took: 3.600258666s
+ 
+2M Rows, 10k ChunkSize, 
+Seed took: 25.437479311s
+ 
+4M Rows, 10k ChunkSize, 
+Seed took: 30.529398126s
+ 
+8M Rows, 10k ChunkSize, 
+Seed took: 1m11.075041006s
+ 
+16M Rows, 10k ChunkSize, 
+Seed took: 2m17.128961819s
+ 
+32M Rows, 10k ChunkSize, 
+Seed took: 5m18.165694402s
+ 
+---------- Benchmark ----------
+1M Rows, 10k ChunkSize, 
+Seed took: 3.63811871s
+ 
+2M Rows, 10k ChunkSize, 
+Seed took: 21.02508081s
+ 
+4M Rows, 10k ChunkSize, 
+Seed took: 44.254432944s
+ 
+8M Rows, 10k ChunkSize, 
+Seed took: 1m1.673058639s
+ 
+16M Rows, 10k ChunkSize, 
+Seed took: 2m18.608022744s
+---------- Benchmark Prog ----------
+1M Rows, 10k ChunkSize, 
+Seed took: 3.872652764s
+ 
+2M Rows, 10k ChunkSize, 
+Seed took: 8.062475501s
+ 
+3M Rows, 10k ChunkSize, 
+Seed took: 13.128215845s
+ 
+4M Rows, 10k ChunkSize, 
+Seed took: 36.008963817s
+ 
+5M Rows, 10k ChunkSize, 
+Seed took: 35.326958523s
+ 
+6M Rows, 10k ChunkSize, 
+Seed took: 52.790821582s
+ 
+7M Rows, 10k ChunkSize, 
+Seed took: 58.230857757s
+ 
+8M Rows, 10k ChunkSize, 
+Seed took: 1m19.221289023s
+ 
+9M Rows, 10k ChunkSize, 
+Seed took: 1m26.630160855s
+ 
+10M Rows, 10k ChunkSize, 
+Seed took: 1m40.61998979s
+ 
+---------- Benchmark Prog ----------
+1M Rows, 10k ChunkSize, 
+Seed took: 4.008474101s
+ 
+2M Rows, 10k ChunkSize, 
+Seed took: 24.585679475s
+ 
+3M Rows, 10k ChunkSize, 
+Seed took: 29.31555296s
+ 
+4M Rows, 10k ChunkSize, 
+Seed took: 46.734814523s
+ 
+5M Rows, 10k ChunkSize, 
+Seed took: 48.59994105s
+ 
+6M Rows, 10k ChunkSize, 
+Seed took: 59.596510803s
+ 
+7M Rows, 10k ChunkSize, 
+Seed took: 1m18.793467238s
+ 
+8M Rows, 10k ChunkSize, 
+Seed took: 1m25.232011601s
+ 
+9M Rows, 10k ChunkSize, 
+Seed took: 1m28.553597795s
+ 
+10M Rows, 10k ChunkSize, 
+Seed took: 1m45.620662406s
+ 
+---------- Benchmark Prog ----------
+1M Rows, 10k ChunkSize, 
+Seed took: 19.675851251s
+ 
+2M Rows, 10k ChunkSize, 
+Seed took: 8.048892598s
+ 
+3M Rows, 10k ChunkSize, 
+Seed took: 26.532367552s
+ 
+4M Rows, 10k ChunkSize, 
+Seed took: 45.093457695s
+ 
+5M Rows, 10k ChunkSize, 
+Seed took: 56.794728373s
+ 
+6M Rows, 10k ChunkSize, 
+Seed took: 1m0.687913669s
+ 
+7M Rows, 10k ChunkSize, 
+Seed took: 1m15.288770243s
+ 
+8M Rows, 10k ChunkSize, 
+---------- Benchmark Prog ----------
+1M Rows, 10k ChunkSize, 
+Seed took: 16.529105924s
+ 
+2M Rows, 10k ChunkSize, 
+Seed took: 8.848166728s
+ 
+3M Rows, 10k ChunkSize, 
+Seed took: 25.627040157s
+ 
+4M Rows, 10k ChunkSize, 
+Seed took: 46.679691637s
+ 
+5M Rows, 10k ChunkSize, 

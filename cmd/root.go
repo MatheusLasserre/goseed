@@ -8,6 +8,7 @@ import (
 	"goseed/db"
 	"goseed/log"
 	"os"
+	"runtime"
 	"strconv"
 	"sync"
 	"time"
@@ -50,11 +51,18 @@ func init() {
 	rootCmd.Flags().Int64P("size", "s", 0, "Seed size")
 	rootCmd.Flags().Int64P("chunkSize", "c", 0, "How many rows to insert at a time. Default: 100. Recommended: 100.")
 	rootCmd.Flags().IntP("max-connections", "m", 0, "How many connections to use. The dafault value is the result of SHOW VARIABLES LIKE 'max_connections'. If max_connections is 0 or not found, the default value is 1.")
-
+	totalCores := runtime.NumCPU()
+	log.Warn("Total Cores: " + strconv.Itoa(totalCores))
+	if totalCores > 1 {
+		totalCores = int(float32(totalCores) * 0.5)
+	} else {
+		totalCores = 1
+	}
+	log.Warn("Using " + strconv.Itoa(totalCores) + " Cores")
+	runtime.GOMAXPROCS(totalCores)
 }
 
 func startSeed(cmd *cobra.Command, args []string) {
-	start := time.Now()
 	dbName, err := cmd.Flags().GetString("database")
 	if err != nil {
 		log.Fatal("failed to detect database:" + err.Error())
@@ -132,17 +140,16 @@ func startSeed(cmd *cobra.Command, args []string) {
 		log.Fatal("failed to get table fields:" + err.Error())
 		return
 	}
-	insertMap := db.DbStore.GenerateInsertionMap(fields, seedSize)
 	wg := &sync.WaitGroup{}
 	start2 := time.Now()
-	err = db.DbStore.BatchInsertFromMap(insertMap, fields, table, chunkSize, dbName, maxConn, wg)
-	wg.Wait()
+	log.Info("Generating Rows and Starting Seeding...")
+	err = db.DbStore.GenerateInsertionMap(fields, table, seedSize, chunkSize, maxConn, dbName, wg)
 	if err != nil {
-		log.Fatal("failed to batch insert from map:" + err.Error())
+		log.Fatal("failed to generate insertion map:" + err.Error())
 		return
 	}
-	log.Info("Generating SQL Value Strings and Sending Batches took: " + time.Since(start2).String())
-
+	wg.Wait()
+	log.Info("Seed took: " + time.Since(start2).String())
 	count, err := db.DbStore.SelectCount(table, dbName)
 	if err != nil {
 		log.Fatal("failed to select count:" + err.Error())
@@ -150,5 +157,4 @@ func startSeed(cmd *cobra.Command, args []string) {
 	}
 	log.Info("TABLE " + table + " count: " + strconv.FormatInt(count, 10))
 
-	log.Info("Seed took: " + time.Since(start).String())
 }

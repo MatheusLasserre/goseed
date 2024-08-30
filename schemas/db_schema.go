@@ -5,8 +5,8 @@ import "sync"
 type DbStore interface {
 	Setup(relFilePath string) error
 	GetTableFields(database, table string) ([]TableFields, error)
-	GenerateInsertionMap(fields []TableFields, seedSize int64) []map[string]InsertionMap
-	BatchInsertFromMap(bArr []map[string]InsertionMap, fields []TableFields, table string, chunkSize int64, dbName string, maxConn int, wg *sync.WaitGroup) error
+	GenerateInsertionMap(fields []TableFields, table string, seedSize int64, chunkSize int64, maxConn int, dbName string, wg *sync.WaitGroup) error
+	BatchInsertFromMap(bArr []map[string]InsertionMap, fields []TableFields, table string, chunkSize int64, dbName string, maxConn int) error
 	SelectCount(table string, dbName string) (int64, error)
 	GetMaxConnections() (int, error)
 }
