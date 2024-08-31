@@ -93,14 +93,14 @@ var supportedNumericTypes = [...]TypesFormat{
 }
 
 func (v *ValuesGenerator) GenerateNumericTypes(field schemas.TableFields, index int) (int64, error) {
-	if field.Key != nil {
-		if (*field.Key) == "PRI" {
-			return int64(index + 1), nil
-		}
-	}
 
 	strSlice := strings.Split(field.Type, "(")
 	for _, v := range supportedNumericTypes {
+		if field.Key != nil {
+			if (*field.Key) == "PRI" {
+				return int64(index + 1), nil
+			}
+		}
 		if strings.ToLower(strSlice[0]) == v.name {
 			multiplier := int64(1)
 			if rand.IntN(2) == 1 && v.minLength > 0 {
