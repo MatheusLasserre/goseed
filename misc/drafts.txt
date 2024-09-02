@@ -1,0 +1,4 @@
+Support for composite primary keys
+-> Scan table and get columns info
+-> Scan specifically for the composite key
+-> Math with fields

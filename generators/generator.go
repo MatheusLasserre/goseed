@@ -2,6 +2,7 @@ package generators
 
 import (
 	"errors"
+	"fmt"
 	"goseed/log"
 	"goseed/schemas"
 	"math/rand/v2"
@@ -12,6 +13,31 @@ import (
 
 	"github.com/google/uuid"
 )
+
+func GenerateFieldMap(fields []schemas.TableFields, idx int) (map[string]schemas.InsertionMap, error) {
+	result := make(map[string]schemas.InsertionMap)
+	for _, v := range fields {
+		strValue, intValue, err := GenerateTableFieldValue(v, idx)
+		if err != nil {
+			log.Fatal("failed to generate insertion map: " + err.Error())
+			return nil, fmt.Errorf("failed to generate insertion map: %w", err)
+		}
+		if intValue != nil {
+			im := schemas.InsertionMap{
+				StrValue: "",
+				IntValue: intValue,
+			}
+			result[v.Field] = im
+			continue
+		}
+
+		result[v.Field] = schemas.InsertionMap{
+			StrValue: strValue,
+			IntValue: nil,
+		}
+	}
+	return result, nil
+}
 
 func GenerateTableFieldValue(fields schemas.TableFields, index int) (string, schemas.NumberNil, error) {
 	if fields.Extra != nil {
@@ -96,12 +122,12 @@ func (v *ValuesGenerator) GenerateNumericTypes(field schemas.TableFields, index 
 
 	strSlice := strings.Split(field.Type, "(")
 	for _, v := range supportedNumericTypes {
-		if field.Key != nil {
-			if (*field.Key) == "PRI" {
-				return int64(index + 1), nil
-			}
-		}
 		if strings.ToLower(strSlice[0]) == v.name {
+			if field.Key != nil {
+				if (*field.Key) == "PRI" {
+					return int64(index + 1), nil
+				}
+			}
 			multiplier := int64(1)
 			if rand.IntN(2) == 1 && v.minLength > 0 {
 				multiplier = -1

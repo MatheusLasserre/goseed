@@ -100,27 +100,10 @@ func (s *DbStore) GenerateInsertionMap(fields []schemas.TableFields, table strin
 	limiter := make(chan int, maxLimit)
 	var decrementer int64 = 0
 	for idx := int64(0); idx < seedSize; idx++ {
-		result := make(map[string]schemas.InsertionMap)
-		for _, v := range fields {
-			strValue, intValue, err := generators.GenerateTableFieldValue(v, int(idx))
-			if err != nil {
-				log.Fatal("failed to generate insertion map: " + err.Error())
-				return fmt.Errorf("failed to generate insertion map: %w", err)
-			}
-			if intValue != nil {
-				im := schemas.InsertionMap{
-					StrValue: "",
-					IntValue: intValue,
-				}
-				result[v.Field] = im
-				continue
-			}
-
-			result[v.Field] = schemas.InsertionMap{
-				StrValue: strValue,
-				IntValue: nil,
-			}
-
+		result, err := generators.GenerateFieldMap(fields, int(idx))
+		if err != nil {
+			log.Fatal("failed to generate insertion map: " + err.Error())
+			return fmt.Errorf("failed to generate insertion map: %w", err)
 		}
 		mapArray[idx-decrementer] = result
 		if int64(idx+1)%chunkSize == 0 && int64(idx+1) >= chunkSize || idx == ln {
