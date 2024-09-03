@@ -9,5 +9,5 @@ CREATE TABLE IF NOT EXISTS person (
     balance DECIMAL(10,2),
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id, created_at)
-);
+); 
 

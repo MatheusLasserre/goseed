@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"goseed/log"
 	"goseed/schemas"
+	"goseed/utils"
 	"math/rand/v2"
 	"strconv"
 	"strings"
@@ -14,29 +15,117 @@ import (
 	"github.com/google/uuid"
 )
 
-func GenerateFieldMap(fields []schemas.TableFields, idx int) (map[string]schemas.InsertionMap, error) {
-	result := make(map[string]schemas.InsertionMap)
-	for _, v := range fields {
-		strValue, intValue, err := GenerateTableFieldValue(v, idx)
+func GenerateFieldMap(fields []schemas.TableFields, pKeys int, idx int) ([]map[string]schemas.InsertionMap, error) {
+	// loopCount := pKeys
+	// if pKeys <= 0 {
+	// 	loopCount = 1
+	// }
+	curPKey := 1
+	mapArraySize := utils.PowerInt(2, pKeys-1)
+	mapArrIdx := 0
+	mapArray := make([]map[string]schemas.InsertionMap, mapArraySize)
+	fIdx := 0
+	err := GenerateCompositeMaps(mapArray, make(map[string]schemas.InsertionMap, len(fields)), fields, idx, fIdx, &curPKey, len(fields), &mapArrIdx)
+	if err != nil {
+		log.Fatal("failed to generate insertion map: " + err.Error())
+		return nil, fmt.Errorf("failed to generate insertion map: %w", err)
+	}
+	// for i := 0; i < loopCount; i++ {
+	// 	result := make(map[string]schemas.InsertionMap, pKeys)
+	// 	for _, v := range fields {
+	// 		strValue, intValue, err := GenerateTableFieldValue(v, idx)
+	// 		if err != nil {
+	// 			log.Fatal("failed to generate insertion map: " + err.Error())
+	// 			return nil, fmt.Errorf("failed to generate insertion map: %w", err)
+	// 		}
+	// 		if intValue != nil {
+	// 			im := schemas.InsertionMap{
+	// 				StrValue: "",
+	// 				IntValue: intValue,
+	// 			}
+	// 			result[v.Field] = im
+	// 			continue
+	// 		}
+
+	// 		result[v.Field] = schemas.InsertionMap{
+	// 			StrValue: strValue,
+	// 			IntValue: nil,
+	// 		}
+	// 	}
+	// 	mapArray[i] = result
+	// }
+	return mapArray, nil
+}
+
+func GenerateCompositeMaps(mapArr []map[string]schemas.InsertionMap, curMap map[string]schemas.InsertionMap, fields []schemas.TableFields, outerIdx int, fIdx int, curPKey *int, mapLength int, mapArrIdx *int) error {
+	if fIdx == mapLength {
+		mapArr[*mapArrIdx] = curMap
+		*mapArrIdx++
+		return nil
+	}
+
+	if *fields[fIdx].Key != "PRI" || *fields[fIdx].Key == "PRI" && *curPKey == 1 {
+		if *fields[fIdx].Key == "PRI" && *curPKey == 1 {
+			*curPKey = 0
+		}
+		strValue, intValue, err := GenerateTableFieldValue(fields[fIdx], outerIdx)
 		if err != nil {
 			log.Fatal("failed to generate insertion map: " + err.Error())
-			return nil, fmt.Errorf("failed to generate insertion map: %w", err)
+			return fmt.Errorf("failed to generate insertion map: %w", err)
 		}
 		if intValue != nil {
-			im := schemas.InsertionMap{
+			curMap[fields[fIdx].Field] = schemas.InsertionMap{
 				StrValue: "",
 				IntValue: intValue,
 			}
-			result[v.Field] = im
-			continue
+			err = GenerateCompositeMaps(mapArr, curMap, fields, outerIdx, fIdx+1, curPKey, mapLength, mapArrIdx)
+			if err != nil {
+				return fmt.Errorf("failed to generate insertion map: %w", err)
+			}
+			return nil
 		}
-
-		result[v.Field] = schemas.InsertionMap{
+		curMap[fields[fIdx].Field] = schemas.InsertionMap{
 			StrValue: strValue,
 			IntValue: nil,
 		}
+		err = GenerateCompositeMaps(mapArr, curMap, fields, outerIdx, fIdx+1, curPKey, mapLength, mapArrIdx)
+		if err != nil {
+			return fmt.Errorf("failed to generate insertion map: %w", err)
+		}
+		return nil
 	}
-	return result, nil
+
+	if *fields[fIdx].Key == "PRI" {
+		for i := 0; i < 2; i++ {
+			strValue, intValue, err := GenerateTableFieldValue(fields[fIdx], outerIdx+i)
+			if err != nil {
+				log.Fatal("failed to generate insertion map: " + err.Error())
+				return fmt.Errorf("failed to generate insertion map: %w", err)
+			}
+			if intValue != nil {
+				curMap[fields[fIdx].Field] = schemas.InsertionMap{
+					StrValue: "",
+					IntValue: intValue,
+				}
+				err = GenerateCompositeMaps(mapArr, curMap, fields, outerIdx, fIdx+1, curPKey, mapLength, mapArrIdx)
+				if err != nil {
+					return fmt.Errorf("failed to generate insertion map: %w", err)
+				}
+				continue
+			}
+			curMap[fields[fIdx].Field] = schemas.InsertionMap{
+				StrValue: strValue,
+				IntValue: nil,
+			}
+			err = GenerateCompositeMaps(mapArr, curMap, fields, outerIdx, fIdx+1, curPKey, mapLength, mapArrIdx)
+			if err != nil {
+				return fmt.Errorf("failed to generate insertion map: %w", err)
+			}
+		}
+		return nil
+	}
+
+	return fmt.Errorf("failed to generate insertion map: Failed to build map. This error should never happen, please open an issue")
 }
 
 func GenerateTableFieldValue(fields schemas.TableFields, index int) (string, schemas.NumberNil, error) {
@@ -62,6 +151,18 @@ func GenerateTableFieldValue(fields schemas.TableFields, index int) (string, sch
 	return "", nil, errors.New("Failed to generate table field value for type: " + fields.Type)
 }
 
+func CountPrimaryKeys(fields []schemas.TableFields) int {
+	count := 0
+	for _, v := range fields {
+		if v.Key != nil {
+			if (*v.Key) == "PRI" {
+				count++
+			}
+		}
+	}
+	return count
+}
+
 var GenerateValue = NewValuesGenerator()
 
 func NewValuesGenerator() *ValuesGenerator {
@@ -80,7 +181,7 @@ var supportedStringTypes = [...]TypesFormat{
 func (v *ValuesGenerator) GenerateStringTypes(field schemas.TableFields) (string, error) {
 	for _, v := range supportedStringTypes {
 		strSlice := strings.Split(field.Type, "(")
-		if strings.ToLower(strSlice[0]) == v.name {
+		if strings.ToLower(strSlice[0]) == v.Name {
 			if field.Key != nil {
 				if (*field.Key) == "PRI" {
 					return uuid.NewString(), nil
@@ -89,7 +190,7 @@ func (v *ValuesGenerator) GenerateStringTypes(field schemas.TableFields) (string
 			if len(strSlice) > 1 {
 				typeLength, err := strconv.ParseInt(strings.Replace(strSlice[1], ")", "", -1), 10, 64)
 				if err != nil {
-					log.Fatal("failed to parse type " + v.name + ": " + err.Error())
+					log.Fatal("failed to parse type " + v.Name + ": " + err.Error())
 					return "", err
 				}
 				if typeLength >= v.minLength && typeLength <= v.maxLength {
@@ -103,7 +204,7 @@ func (v *ValuesGenerator) GenerateStringTypes(field schemas.TableFields) (string
 	return "", errors.New("failed to generate table field value for type: " + field.Type)
 }
 
-var supportedNumericTypes = [...]TypesFormat{
+var SupportedNumericTypes = [...]TypesFormat{
 	{"bit", 1, 64},
 	{"tinyint", -128, 127},
 	{"smallint", -32768, 32767},
@@ -121,8 +222,8 @@ var supportedNumericTypes = [...]TypesFormat{
 func (v *ValuesGenerator) GenerateNumericTypes(field schemas.TableFields, index int) (int64, error) {
 
 	strSlice := strings.Split(field.Type, "(")
-	for _, v := range supportedNumericTypes {
-		if strings.ToLower(strSlice[0]) == v.name {
+	for _, v := range SupportedNumericTypes {
+		if strings.ToLower(strSlice[0]) == v.Name {
 			if field.Key != nil {
 				if (*field.Key) == "PRI" {
 					return int64(index + 1), nil
@@ -166,7 +267,7 @@ var supportedDateTypes = [...]TypesFormat{
 func (v *ValuesGenerator) GenerateDateTypes(field schemas.TableFields) (string, error) {
 	strSlice := strings.Split(field.Type, "(")
 	for _, v := range supportedDateTypes {
-		if strings.ToLower(strSlice[0]) == v.name {
+		if strings.ToLower(strSlice[0]) == v.Name {
 			randDate := generateRandomUnixTime(946692000, 1893466800)
 			if field.Type == "date" {
 				return randDate.Format("2006-01-02"), nil
@@ -239,7 +340,7 @@ type ValuesGenerator struct {
 }
 
 type TypesFormat struct {
-	name      string
+	Name      string
 	minLength int64
 	maxLength int64
 }

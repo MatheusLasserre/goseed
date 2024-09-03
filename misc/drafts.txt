@@ -2,3 +2,42 @@ Support for composite primary keys
 -> Scan table and get columns info
 -> Scan specifically for the composite key
 -> Math with fields
+
+Pn=n!
+Id1, id2, id3 = 2!^2 = 2
+1,1,1
+1,2,1
+1,2,2
+1,1,2
+
+Id1, id2, id3, id4 = 2!^3 = 8
+1,1,1,1
+1,1,1,2
+1,1,2,1
+1,1,2,2
+1,2,1,1
+1,2,1,2
+1,2,2,1
+1,2,2,2
+
+
+id1 -> fixed
+    id2 -> 2 values
+        id3 -> 2 values
+            id4 -> 2 values
+
+
+
+f -> []map,map, idx
+    if idx > len(map)
+        map arrayPush -> nil
+
+v.key !== pri ?
+    map.Field = genValue()
+    f([]map, map, idx+1)
+    return nil
+v.key === pri
+    for i:=0, i <2, i++
+    map.Field = genValue()
+    f([]map, map, idx+1)
+    return nil

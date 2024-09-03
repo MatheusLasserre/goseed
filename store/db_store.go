@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -87,10 +88,39 @@ func (s *DbStore) GetMaxConnections() (int, error) {
 func (s *DbStore) GetTableFields(database, table string) ([]schemas.TableFields, error) {
 	result := []schemas.TableFields{}
 	s.Select(&result, fmt.Sprintf("SELECT COLUMN_NAME AS 'Field', COLUMN_TYPE AS `Type`, IS_NULLABLE AS `NULL`, COLUMN_KEY AS `Key`,COLUMN_DEFAULT AS `Default`, EXTRA AS `Extra` FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = '%s' AND TABLE_NAME = '%s';", database, table))
+	slices.SortStableFunc(result, func(i, j schemas.TableFields) int {
+		if *i.Key == *j.Key {
+			iv, jv := 0, 0
+			jtype := strings.Split(j.Type, "(")
+			itype := strings.Split(i.Type, "(")
+			for _, v := range generators.SupportedNumericTypes {
+				if strings.ToLower(jtype[0]) == v.Name {
+					jv = 1
+				}
+				if strings.ToLower(itype[0]) == v.Name {
+					iv = 1
+				}
+			}
+			if iv < jv {
+				return 1
+			}
+			if iv > jv {
+				return -1
+			}
+		}
+		if *i.Key == "PRI" {
+			return -1
+		}
+		if *j.Key == "PRI" {
+			return 1
+		}
+		return 0
+	})
 	return result, nil
 }
 
 func (s *DbStore) GenerateInsertionMap(fields []schemas.TableFields, table string, seedSize int64, chunkSize int64, maxConn int, dbName string, wg *sync.WaitGroup) error {
+	pKeys := generators.CountPrimaryKeys(fields)
 	mapArray := make([]map[string]schemas.InsertionMap, chunkSize)
 	ln := seedSize - 1
 	maxLimit := maxConn - 10
@@ -99,27 +129,34 @@ func (s *DbStore) GenerateInsertionMap(fields []schemas.TableFields, table strin
 	}
 	limiter := make(chan int, maxLimit)
 	var decrementer int64 = 0
-	for idx := int64(0); idx < seedSize; idx++ {
-		result, err := generators.GenerateFieldMap(fields, int(idx))
+	for idx := int64(0); idx < seedSize; {
+		result, err := generators.GenerateFieldMap(fields, pKeys, int(idx))
+
 		if err != nil {
 			log.Fatal("failed to generate insertion map: " + err.Error())
-			return fmt.Errorf("failed to generate insertion map: %w", err)
 		}
-		mapArray[idx-decrementer] = result
-		if int64(idx+1)%chunkSize == 0 && int64(idx+1) >= chunkSize || idx == ln {
-			wg.Add(1)
-			limiter <- 1
-			go func(mArr []map[string]schemas.InsertionMap) {
-				err := s.BatchInsertFromMap(mArr, fields, table, chunkSize, dbName, maxConn)
-				if err != nil {
-					log.Fatal("failed to batch insert from map: " + err.Error())
+		for j, v := range result {
+			mapArray[idx+int64(j)-decrementer] = v
+			if (idx+1+int64(j))%chunkSize == 0 && (idx+1+int64(j)) >= chunkSize || idx+int64(j) == ln {
+				wg.Add(1)
+				limiter <- 1
+				go func(mArr []map[string]schemas.InsertionMap) {
+					fmt.Printf("mArr: %+v\n", mArr)
+					err := s.BatchInsertFromMap(mArr, fields, table, chunkSize, dbName, maxConn)
+					if err != nil {
+						log.Fatal("failed to batch insert from map: " + err.Error())
+					}
+					<-limiter
+					wg.Done()
+				}(mapArray)
+				mapArray = make([]map[string]schemas.InsertionMap, chunkSize)
+				decrementer = decrementer + chunkSize
+				if idx+int64(j) == ln {
+					break
 				}
-				<-limiter
-				wg.Done()
-			}(mapArray)
-			mapArray = make([]map[string]schemas.InsertionMap, chunkSize)
-			decrementer = decrementer + chunkSize
+			}
 		}
+		idx = idx + int64(len(result))
 	}
 
 	return nil
