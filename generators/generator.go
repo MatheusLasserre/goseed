@@ -6,6 +6,7 @@ import (
 	"goseed/log"
 	"goseed/schemas"
 	"goseed/utils"
+	"maps"
 	"math/rand/v2"
 	"strconv"
 	"strings"
@@ -25,7 +26,8 @@ func GenerateFieldMap(fields []schemas.TableFields, pKeys int, idx int) ([]map[s
 	mapArrIdx := 0
 	mapArray := make([]map[string]schemas.InsertionMap, mapArraySize)
 	fIdx := 0
-	err := GenerateCompositeMaps(mapArray, make(map[string]schemas.InsertionMap, len(fields)), fields, idx, fIdx, &curPKey, len(fields), &mapArrIdx)
+	tmpMap := make(map[string]schemas.InsertionMap, len(fields))
+	err := GenerateCompositeMaps(mapArray, tmpMap, fields, idx, fIdx, &curPKey, len(fields), &mapArrIdx)
 	if err != nil {
 		log.Fatal("failed to generate insertion map: " + err.Error())
 		return nil, fmt.Errorf("failed to generate insertion map: %w", err)
@@ -59,15 +61,15 @@ func GenerateFieldMap(fields []schemas.TableFields, pKeys int, idx int) ([]map[s
 
 func GenerateCompositeMaps(mapArr []map[string]schemas.InsertionMap, curMap map[string]schemas.InsertionMap, fields []schemas.TableFields, outerIdx int, fIdx int, curPKey *int, mapLength int, mapArrIdx *int) error {
 	if fIdx == mapLength {
-		mapArr[*mapArrIdx] = curMap
+		mapArr[*mapArrIdx] = maps.Clone(curMap)
 		*mapArrIdx++
 		return nil
 	}
-
 	if *fields[fIdx].Key != "PRI" || *fields[fIdx].Key == "PRI" && *curPKey == 1 {
 		if *fields[fIdx].Key == "PRI" && *curPKey == 1 {
 			*curPKey = 0
 		}
+
 		strValue, intValue, err := GenerateTableFieldValue(fields[fIdx], outerIdx)
 		if err != nil {
 			log.Fatal("failed to generate insertion map: " + err.Error())

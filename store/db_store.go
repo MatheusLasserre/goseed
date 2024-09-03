@@ -141,7 +141,6 @@ func (s *DbStore) GenerateInsertionMap(fields []schemas.TableFields, table strin
 				wg.Add(1)
 				limiter <- 1
 				go func(mArr []map[string]schemas.InsertionMap) {
-					fmt.Printf("mArr: %+v\n", mArr)
 					err := s.BatchInsertFromMap(mArr, fields, table, chunkSize, dbName, maxConn)
 					if err != nil {
 						log.Fatal("failed to batch insert from map: " + err.Error())
@@ -172,6 +171,7 @@ func (s *DbStore) BatchInsertFromMap(bArr []map[string]schemas.InsertionMap, fie
 	}
 	columnsString = strings.TrimSuffix(columnsString, ", ") + ")"
 	utilString := ""
+mainLoop:
 	for _, v := range bArr {
 		utilString = "("
 		for _, v2 := range fieldsOrder {
@@ -182,6 +182,9 @@ func (s *DbStore) BatchInsertFromMap(bArr []map[string]schemas.InsertionMap, fie
 				} else {
 					utilString = utilString + strconv.FormatInt(mapV.IntValue.Number(), 10) + ", "
 				}
+			}
+			if !ok {
+				continue mainLoop
 			}
 		}
 		utilString = strings.TrimSuffix(utilString, ", ") + ") "
