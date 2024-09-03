@@ -9,6 +9,6 @@ CREATE TABLE IF NOT EXISTS person (
     name VARCHAR(255) NOT NULL,
     balance DECIMAL(10,2),
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (id, second_id, created_at)
+    PRIMARY KEY (id, created_at)
 ); 
 
