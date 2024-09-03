@@ -22,7 +22,7 @@ func GenerateFieldMap(fields []schemas.TableFields, pKeys int, idx int) ([]map[s
 	// 	loopCount = 1
 	// }
 	curPKey := 1
-	mapArraySize := utils.PowerInt(2, pKeys-1)
+	mapArraySize := utils.PowerInt(2, pKeys-1) // Change 2 to factorial N for more mixed composite primary keys
 	mapArrIdx := 0
 	mapArray := make([]map[string]schemas.InsertionMap, mapArraySize)
 	fIdx := 0
@@ -126,7 +126,6 @@ func GenerateCompositeMaps(mapArr []map[string]schemas.InsertionMap, curMap map[
 		}
 		return nil
 	}
-
 	return fmt.Errorf("failed to generate insertion map: Failed to build map. This error should never happen, please open an issue")
 }
 
