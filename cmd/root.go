@@ -44,13 +44,13 @@ func init() {
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
-	rootCmd.Flags().StringP("database", "d", "", "use database")
-	rootCmd.Flags().StringP("table", "t", "", "from table")
+	rootCmd.Flags().StringP("database", "d", "", "The database name to seed.")
+	rootCmd.Flags().StringP("table", "t", "", "The table name to seed.")
 	rootCmd.Flags().StringP("host", "p", "", "Database Connection String. Example: -p \"root:goseed@tcp(localhost:3306)/\"")
 	rootCmd.Flags().String("setup-file", "", "Setup file containing SQL statements to run on startup. It's a raw run, so make sure it's valid SQL.")
 	rootCmd.Flags().Int64P("size", "s", 0, "Seed size")
-	rootCmd.Flags().Int64P("chunkSize", "c", 0, "How many rows to insert at a time. Default: 100. Recommended: 100.")
-	rootCmd.Flags().IntP("max-connections", "m", 0, "How many connections to use. The dafault value is the result of SHOW VARIABLES LIKE 'max_connections'. If max_connections is 0 or not found, the default value is 1.")
+	rootCmd.Flags().Int64P("chunkSize", "c", 0, "How many rows to insert at a time. Default: 100. Recommended: 10000.")
+	rootCmd.Flags().IntP("max-connections", "m", 0, "How many connections to use. The default value is the result of SHOW VARIABLES LIKE 'max_connections'. If max_connections is 0 or not found, the default value is 1.")
 	totalCores := runtime.NumCPU()
 	log.Warn("Total Cores: " + strconv.Itoa(totalCores))
 	if totalCores > 1 {

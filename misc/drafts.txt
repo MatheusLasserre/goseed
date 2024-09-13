@@ -3,7 +3,7 @@ Support for composite primary keys
 -> Scan specifically for the composite key
 -> Math with fields
 
-Pn=n!
+Cn=n! -> xCn = n!^x
 Id1, id2, id3 = 2!^2 = 2
 1,1,1
 1,2,1
